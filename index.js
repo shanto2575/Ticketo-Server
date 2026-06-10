@@ -54,7 +54,7 @@ async function run() {
         })
 
         app.patch('/api/organization/:id', async (req, res) => {
-            const {id}=req.params;
+            const { id } = req.params;
             const { organizationName, logo, website, description, organizerEmail } = req.body;
             const updateData = {
                 organizationName,
@@ -73,6 +73,22 @@ async function run() {
                     }
                 }
             )
+            // console.log(result,'re')
+            res.json(result)
+        })
+
+        //events
+        app.get('/api/events/:email', async (req, res) => {
+            const { email } = req.params;
+            const result = await eventsCollection.find({ OrganizationEmail: email }).toArray()
+            res.json(result)
+        })
+
+        app.post('/api/events', async (req, res) => {
+            const data = req.body;
+            const result = await eventsCollection.insertOne({
+                ...data
+            })
             // console.log(result,'re')
             res.json(result)
         })
