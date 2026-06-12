@@ -29,11 +29,12 @@ async function run() {
         const bookingsCollection = db.collection('bookings')
 
 
+        //Organization
         app.get('/api/organization/:email', async (req, res) => {
             const { email } = req.params;
             const result = await organizationCollection.findOne({ organizerEmail: email })
             res.json(result)
-            console.log(result)
+            //console.log(result)
         })
 
 
@@ -92,11 +93,19 @@ async function run() {
             // console.log(result,'re')
             res.json(result)
         })
-
-
-
-
-
+        app.patch('/api/events/:id', async (req, res) => {
+            const { id } = req.params;
+            const updateData = req.body;
+            const result = await eventsCollection.updateOne(
+                { _id: new ObjectId(id) },
+                {
+                    $set: {
+                        ...updateData
+                    }
+                }
+            )
+            res.json(result)
+        })
 
         // await client.db("admin").command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
