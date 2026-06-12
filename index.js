@@ -91,8 +91,9 @@ async function run() {
                 ...data
             })
             // console.log(result,'re')
-            res.json(result)
+            return res.json(result)
         })
+
         app.patch('/api/events/:id', async (req, res) => {
             const { id } = req.params;
             const updateData = req.body;
@@ -104,6 +105,12 @@ async function run() {
                     }
                 }
             )
+            res.json(result)
+        })
+
+        app.delete('/api/events/:id',async(req,res)=>{
+            const {id}=req.params;
+            const result=await eventsCollection.deleteOne({_id:new ObjectId(id)})
             res.json(result)
         })
 
