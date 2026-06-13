@@ -79,6 +79,16 @@ async function run() {
         })
 
         //events
+        app.get('/api/events',async(req,res)=>{
+            const cursor=eventsCollection.find()
+            const result=await cursor.toArray()
+            res.json(result)
+        })
+        app.get('/api/single-events/:id',async(req,res)=>{
+            const {id}=req.params;
+            const result=await eventsCollection.findOne({_id:new ObjectId(id)})
+            res.json(result)
+        })
         app.get('/api/events/:email', async (req, res) => {
             const { email } = req.params;
             const result = await eventsCollection.find({ OrganizationEmail: email }).toArray()
