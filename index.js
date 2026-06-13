@@ -25,6 +25,7 @@ async function run() {
 
         const db = client.db('Ticketo')
         const organizationCollection = db.collection('organization')
+        const usersCollection = db.collection('user')
         const eventsCollection = db.collection('events')
         const bookingsCollection = db.collection('bookings')
 
@@ -78,12 +79,14 @@ async function run() {
             res.json(result)
         })
 
-        //events
+        //..........Events................
+
         app.get('/api/events',async(req,res)=>{
             const cursor=eventsCollection.find()
             const result=await cursor.toArray()
             res.json(result)
         })
+
         app.get('/api/single-events/:id',async(req,res)=>{
             const {id}=req.params;
             const result=await eventsCollection.findOne({_id:new ObjectId(id)})
@@ -97,8 +100,19 @@ async function run() {
 
         app.post('/api/events', async (req, res) => {
             const data = req.body;
+            // console.log(data)
+            const organizer=await usersCollection.findOne({email:data?.OrganizationEmail})
+            // console.log(organizer)
+            const OrganizerEventCount=await eventsCollection.countDocuments({OrganizationEmail:data?.OrganizationEmail})
+            // console.log(OrganizerEventCount)
+            if(!organizer?.isPremium && OrganizerEventCount >=3){
+                res.status(401).send({
+                    message:'Your Limit is Over'
+                })
+            }
             const result = await eventsCollection.insertOne({
-                ...data
+                ...data,
+                status:'pending'
             })
             // console.log(result,'re')
             return res.json(result)
