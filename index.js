@@ -81,15 +81,33 @@ async function run() {
 
         //..........Events................
 
-        app.get('/api/events',async(req,res)=>{
-            const cursor=eventsCollection.find()
-            const result=await cursor.toArray()
+        app.get('/api/events', async (req, res) => {
+            const search = req.query.search;
+            const category = req.query.category;
+            const location = req.query.location;
+            const query = {};
+            if (search) {
+                query.title = {
+                    $regex: search,
+                    $options: "i"
+                };
+            }
+            if (category) {
+                // console.log(category,category.split(','))
+                // query.category = category;
+                query.category = { $in: category.split(',')}
+            }
+            if (location) {
+                query.location = location;
+            }
+            const cursor = eventsCollection.find(query)
+            const result = await cursor.toArray()
             res.json(result)
         })
 
-        app.get('/api/single-events/:id',async(req,res)=>{
-            const {id}=req.params;
-            const result=await eventsCollection.findOne({_id:new ObjectId(id)})
+        app.get('/api/single-events/:id', async (req, res) => {
+            const { id } = req.params;
+            const result = await eventsCollection.findOne({ _id: new ObjectId(id) })
             res.json(result)
         })
         app.get('/api/events/:email', async (req, res) => {
@@ -101,18 +119,18 @@ async function run() {
         app.post('/api/events', async (req, res) => {
             const data = req.body;
             // console.log(data)
-            const organizer=await usersCollection.findOne({email:data?.OrganizationEmail})
+            const organizer = await usersCollection.findOne({ email: data?.OrganizationEmail })
             // console.log(organizer)
-            const OrganizerEventCount=await eventsCollection.countDocuments({OrganizationEmail:data?.OrganizationEmail})
+            const OrganizerEventCount = await eventsCollection.countDocuments({ OrganizationEmail: data?.OrganizationEmail })
             // console.log(OrganizerEventCount)
-            if(!organizer?.isPremium && OrganizerEventCount >=3){
+            if (!organizer?.isPremium && OrganizerEventCount >= 3) {
                 res.status(401).send({
-                    message:'Your Limit is Over'
+                    message: 'Your Limit is Over'
                 })
             }
             const result = await eventsCollection.insertOne({
                 ...data,
-                status:'pending'
+                status: 'pending'
             })
             // console.log(result,'re')
             return res.json(result)
@@ -132,9 +150,9 @@ async function run() {
             res.json(result)
         })
 
-        app.delete('/api/events/:id',async(req,res)=>{
-            const {id}=req.params;
-            const result=await eventsCollection.deleteOne({_id:new ObjectId(id)})
+        app.delete('/api/events/:id', async (req, res) => {
+            const { id } = req.params;
+            const result = await eventsCollection.deleteOne({ _id: new ObjectId(id) })
             res.json(result)
         })
 
