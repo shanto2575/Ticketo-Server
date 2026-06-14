@@ -28,6 +28,7 @@ async function run() {
         const usersCollection = db.collection('user')
         const eventsCollection = db.collection('events')
         const bookingsCollection = db.collection('bookings')
+        const paymentCollection = db.collection('payments');
 
 
         //Organization
@@ -114,6 +115,44 @@ async function run() {
             const { email } = req.params;
             const result = await eventsCollection.find({ OrganizationEmail: email }).toArray()
             res.json(result)
+        })
+
+        app.post('/api/events/booking',async(req,res)=>{
+            const{amount,eventId,eventTitle,quantity,paymentType,transactionId,email,paymentStatus}=req.body;
+            const bookingData={
+                amount,
+                eventId,
+                eventTitle,
+                quantity,
+                attendeeEmail:email,
+                paymentStatus,
+                transactionId,
+                bookingDate:new Date()
+            }
+
+            const isBookingExist=await bookingsCollection.findOne({transactionId});
+            if(isBookingExist){
+                return res.status(300).send({message:'Already Paid'})
+            }
+            const bookingRes=await bookingsCollection.insertOne(bookingData)
+
+            await eventsCollection.updateOne(
+                {_id:new ObjectId(eventId)},
+                {
+                    $inc:{
+                        capacity:-quantity
+                    }
+                }
+            );
+            const paymentData={
+                userEmail:email,
+                amount,
+                transactionId,
+                paymentStatus,
+                paymentType
+            }
+            await paymentCollection.insertOne(paymentData)
+            res.json(bookingRes)
         })
 
         app.post('/api/events', async (req, res) => {
