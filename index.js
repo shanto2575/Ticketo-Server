@@ -75,7 +75,7 @@ async function run() {
                         ...updateData
                     }
                 }
-            )
+            );
             // console.log(result,'re')
             res.json(result)
         })
@@ -117,39 +117,46 @@ async function run() {
             res.json(result)
         })
 
-        app.post('/api/events/booking',async(req,res)=>{
-            const{amount,eventId,eventTitle,quantity,paymentType,transactionId,email,paymentStatus}=req.body;
-            const bookingData={
+        app.get('/api/events/booking/:email', async (req, res) => {
+            const { email } = req.params;
+            const result = await bookingsCollection.find({ attendeeEmail: email }).toArray()
+            res.json(result)
+        })
+
+        app.post('/api/events/booking', async (req, res) => {
+            const { amount, eventId, eventTitle, quantity, paymentType, transactionId, email, paymentStatus } = req.body;
+            const bookingData = {
                 amount,
                 eventId,
                 eventTitle,
                 quantity,
-                attendeeEmail:email,
+                attendeeEmail: email,
                 paymentStatus,
                 transactionId,
-                bookingDate:new Date()
+                bookingDate: new Date()
             }
 
-            const isBookingExist=await bookingsCollection.findOne({transactionId});
-            if(isBookingExist){
-                return res.status(300).send({message:'Already Paid'})
+            const isBookingExist = await bookingsCollection.findOne({ transactionId });
+            if (isBookingExist) {
+                return res.status(300).send({ message: 'Already Paid' })
             }
-            const bookingRes=await bookingsCollection.insertOne(bookingData)
+            const bookingRes = await bookingsCollection.insertOne(bookingData)
 
             await eventsCollection.updateOne(
-                {_id:new ObjectId(eventId)},
+                { _id: new ObjectId(eventId) },
                 {
-                    $inc:{
-                        capacity:-quantity
+                    $inc: {
+                        capacity: -quantity
                     }
                 }
             );
-            const paymentData={
-                userEmail:email,
+            const paymentData = {
+                userEmail: email,
                 amount,
                 transactionId,
                 paymentStatus,
-                paymentType
+                paymentType,
+                paidAt: new Date()
             }
             await paymentCollection.insertOne(paymentData)
             res.json(bookingRes)
@@ -197,6 +204,10 @@ async function run() {
 
         app.patch('/api/users/upgrade-premium/:email', async (req, res) => {
             const { email } = req.params;
+            const {amount,
+                transactionId,
+                paymentStatus,
+                paymentType}=req.body;
             const result = await usersCollection.updateOne(
                 { email },
                 {
@@ -204,7 +215,24 @@ async function run() {
                         isPremium: true
                     }
                 })
+            const paymentData = {
+                userEmail: email,
+                amount,
+                transactionId,
+                paymentStatus,
+                paymentType,
+                paidAt: new Date()
+            }
+            await paymentCollection.insertOne(paymentData)
+
             res.json(result)
+        })
+
+        app.get('/api/payments/:email', async (req, res) => {
+            const { email } = req.params;
+            const result = await paymentCollection.find({ userEmail: email }).toArray()
+            res.json(result)
+
         })
 
         // await client.db("admin").command({ ping: 1 });
