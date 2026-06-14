@@ -95,7 +95,7 @@ async function run() {
             if (category) {
                 // console.log(category,category.split(','))
                 // query.category = category;
-                query.category = { $in: category.split(',')}
+                query.category = { $in: category.split(',') }
             }
             if (location) {
                 query.location = location;
@@ -153,6 +153,18 @@ async function run() {
         app.delete('/api/events/:id', async (req, res) => {
             const { id } = req.params;
             const result = await eventsCollection.deleteOne({ _id: new ObjectId(id) })
+            res.json(result)
+        })
+
+        app.patch('/api/users/upgrade-premium/:email', async (req, res) => {
+            const { email } = req.params;
+            const result = await usersCollection.updateOne(
+                { email },
+                {
+                    $set: {
+                        isPremium: true
+                    }
+                })
             res.json(result)
         })
 
